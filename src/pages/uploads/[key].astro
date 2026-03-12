@@ -1,0 +1,21 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import AudioPlayer from "../../components/AudioPlayer.astro";
+import TranscriptionControls from "../../components/TranscriptionControls.astro";
+import Example from "../../components/Example.astro";
+const { key } = Astro.params;
+
+const { env } = Astro.locals.runtime;
+const { url, metadata } = await env.UPLOADER.getUpload(key as string);
+---
+
+<Layout>
+  <h1>Key: {key}</h1>
+  <Example>
+    <AudioPlayer src={url}>
+      <TranscriptionControls transcription={metadata.text} vtt={metadata.vtt} />
+    </AudioPlayer>
+  </Example>
+</Layout>

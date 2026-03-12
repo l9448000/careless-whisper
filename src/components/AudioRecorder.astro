@@ -1,0 +1,61 @@
+---
+import AudioPlayer from "./AudioPlayer.astro";
+import TranscriptionControls from "./TranscriptionControls.astro";
+---
+
+<audio-recorder>
+  <div class="controls">
+    <button class="record">⏺️</button>
+    <button class="stop">⏹️</button>
+  </div>
+  <AudioPlayer>
+    <TranscriptionControls />
+  </AudioPlayer>
+</audio-recorder>
+
+<script>
+
+  class AudioRecoder extends HTMLElement {
+    connectedCallback() {
+      let mediaRecorder: MediaRecorder;
+      let audioChunks: BlobPart[] = [];
+
+      const startButton = this.querySelector(
+        "button.record"
+      ) as HTMLButtonElement;
+      const stopButton = this.querySelector("button.stop") as HTMLButtonElement;
+      const player = this.querySelector("audio-player");
+
+      startButton.addEventListener("click", async () => {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+            // TODO: Refresh the children somehow
+            // TODO: How to get the right type
+            player.updateAudio(URL.createObjectURL(audioBlob));
+            audioChunks = [];
+          };
+
+          mediaRecorder.start();
+          startButton.disabled = true;
+          stopButton.disabled = false;
+        }
+      });
+
+      stopButton.addEventListener("click", () => {
+        mediaRecorder.stop();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      });
+    }
+  }
+  customElements.define("audio-recorder", AudioRecoder);
+</script>
